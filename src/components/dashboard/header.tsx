@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +14,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, Bell, PlusCircle, Moon, Sun } from 'lucide-react';
-import type { User } from '@/lib/definitions';
+import type { User, UserRole } from '@/lib/definitions';
 import { logout } from '@/lib/actions';
+import { getUser } from '@/lib/data';
 import { useTheme } from 'next-themes';
+import { Skeleton } from '../ui/skeleton';
 
-export function Header({ user }: { user: User }) {
+export function Header({ userRole }: { userRole: UserRole }) {
   const { setTheme, theme } = useTheme();
+  const [user, setUser] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    setUser(getUser(userRole));
+  }, [userRole]);
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6">
@@ -36,7 +44,7 @@ export function Header({ user }: { user: User }) {
       </div>
 
       <div className="flex items-center gap-2">
-        {user.role === 'sales' && (
+        {user?.role === 'sales' && (
              <Button size="sm" className="hidden sm:flex">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Lead
@@ -54,10 +62,14 @@ export function Header({ user }: { user: User }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
+              {user ? (
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+              ) : (
+                <Skeleton className="h-8 w-8 rounded-full" />
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

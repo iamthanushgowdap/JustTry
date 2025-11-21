@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -24,9 +25,11 @@ import {
   Bell,
   ClipboardCheck,
 } from 'lucide-react';
-import type { User } from '@/lib/definitions';
+import type { User, UserRole } from '@/lib/definitions';
 import { logout } from '@/lib/actions';
+import { getUser } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Skeleton } from '../ui/skeleton';
 
 const salesNav = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -49,8 +52,41 @@ const adminNav = [
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
-export function AppSidebar({ user }: { user: User }) {
+export function AppSidebar({ userRole }: { userRole: UserRole }) {
   const pathname = usePathname();
+  const [user, setUser] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    setUser(getUser(userRole));
+  }, [userRole]);
+
+  if (!user) {
+    return (
+      <Sidebar className="border-r">
+        <SidebarHeader>
+          <div className="flex items-center gap-2 p-2">
+            <AppLogo />
+            <span className="font-semibold text-lg">JustTry</span>
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="p-2 space-y-2">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </SidebarContent>
+        <SidebarFooter className="p-2">
+          <div className="flex items-center gap-3 p-2 rounded-lg bg-muted">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="flex flex-col gap-1">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-3 w-12" />
+              </div>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
+  
   const navItems =
     user.role === 'admin' ? adminNav : user.role === 'back-office' ? backOfficeNav : salesNav;
 
@@ -66,10 +102,11 @@ export function AppSidebar({ user }: { user: User }) {
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.name}>
-              <Link href={item.href}>
+              <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   isActive={pathname === item.href}
                   className="w-full justify-start"
+                  as="a"
                 >
                   <item.icon className="h-4 w-4 mr-2" />
                   {item.name}

@@ -3,7 +3,6 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/dashboard/app-sidebar';
 import { Header } from '@/components/dashboard/header';
 import { getSession } from '@/lib/actions';
-import { getUser } from '@/lib/data';
 import type { UserRole } from '@/lib/definitions';
 
 export default async function DashboardLayout({
@@ -13,14 +12,13 @@ export default async function DashboardLayout({
 }) {
   const session = await getSession();
   const userRole = session?.role as UserRole || 'sales';
-  const user = getUser(userRole);
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen">
-        <AppSidebar user={user} />
+        <AppSidebar userRole={userRole} />
         <main className="flex flex-1 flex-col">
-          <Header user={user} />
+          <Header userRole={userRole} />
           <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-background">
             {children}
           </div>
