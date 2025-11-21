@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { getLeads, saveLeads } from '@/lib/data';
 import type { Lead, Document } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Upload } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Upload, Eye } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,7 @@ export default function LeadsPage() {
   const [isUploadOpen, setIsUploadOpen] = React.useState(false);
   const [editingLead, setEditingLead] = React.useState<Lead | undefined>(undefined);
   const [uploadLead, setUploadLead] = React.useState<Lead | undefined>(undefined);
+  const router = useRouter();
 
   React.useEffect(() => {
     setLeads(getLeads());
@@ -45,10 +47,24 @@ export default function LeadsPage() {
 
   const handleSaveLead = (lead: Lead) => {
     let updatedLeads;
+    const timestamp = new Date().toISOString();
+    
     if (editingLead) {
       updatedLeads = leads.map((l) => (l.id === lead.id ? lead : l));
+      // You might want to add a history item for editing, but for now we focus on status changes.
     } else {
-      updatedLeads = [...leads, { ...lead, id: `LEAD-${Date.now()}`, createdAt: new Date().toISOString() }];
+      const newLead = { 
+        ...lead, 
+        id: `LEAD-${Date.now()}`, 
+        createdAt: timestamp,
+        history: [{
+          status: lead.status,
+          timestamp: timestamp,
+          user: lead.assignedTo,
+          remarks: 'Lead created.'
+        }]
+      };
+      updatedLeads = [...leads, newLead];
     }
     setLeads(updatedLeads);
     saveLeads(updatedLeads);
@@ -77,6 +93,10 @@ export default function LeadsPage() {
     setLeads(updatedLeads);
     saveLeads(updatedLeads);
   };
+
+  const handleViewDetails = (leadId: string) => {
+    router.push(`/dashboard/leads/${leadId}`);
+  }
 
   return (
     <div className="space-y-8">
@@ -145,6 +165,10 @@ export default function LeadsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewDetails(lead.id)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEdit(lead)}>Edit</DropdownMenuItem>
                         {lead.status === 'Documents Needed' && (
                           <>
@@ -153,9 +177,9 @@ export default function LeadsPage() {
                               <Upload className="mr-2 h-4 w-4" />
                               Upload Documents
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                           </>
                         )}
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(lead.id)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

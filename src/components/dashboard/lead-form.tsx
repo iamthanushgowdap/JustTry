@@ -35,6 +35,13 @@ const leadSchema = z.object({
   value: z.coerce.number().min(0, { message: 'Value must be a positive number.' }),
   assignedTo: z.string().min(1, { message: 'Assigned user is required.' }),
   createdAt: z.string().optional(),
+  documents: z.array(z.object({ name: z.string(), url: z.string() })).optional(),
+  history: z.array(z.object({
+    status: z.string(),
+    timestamp: z.string(),
+    user: z.string(),
+    remarks: z.string().optional(),
+  })).optional(),
 });
 
 type LeadFormValues = z.infer<typeof leadSchema>;
@@ -152,7 +159,7 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a sub-category" />
-                    </SelectTrigger>
+                    </Trigger>
                     </FormControl>
                     <SelectContent>
                     {subCategories[serviceType as keyof typeof subCategories].map(sub => (
@@ -175,7 +182,7 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a status" />
-                    </SelectTrigger>
+                    </Trigger>
                     </FormControl>
                     <SelectContent>
                     {statuses[serviceType as keyof typeof statuses].map(s => (

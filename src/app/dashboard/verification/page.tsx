@@ -1,7 +1,7 @@
-
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Table,
     TableBody,
@@ -19,12 +19,17 @@ import {
   
   export default function VerificationPage() {
     const [verificationQueue, setVerificationQueue] = React.useState<Lead[]>([]);
+    const router = useRouter();
 
     React.useEffect(() => {
         const allLeads = getLeads();
         const filteredLeads = allLeads.filter(lead => lead.status !== 'New');
         setVerificationQueue(filteredLeads);
     }, []);
+
+    const handleProcessClick = (leadId: string) => {
+        router.push(`/dashboard/leads/${leadId}`);
+    };
 
     return (
       <div className="space-y-8">
@@ -57,7 +62,7 @@ import {
                         <Badge variant="outline">{item.status}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                        <Button size="sm">Process</Button>
+                        <Button size="sm" onClick={() => handleProcessClick(item.id)}>Process</Button>
                         </TableCell>
                     </TableRow>
                     ))}

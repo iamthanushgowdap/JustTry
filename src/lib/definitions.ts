@@ -76,6 +76,13 @@ export type Document = {
     url: string;
 };
 
+export type LeadHistory = {
+    status: PipelineStatus | string;
+    timestamp: string;
+    user: string;
+    remarks?: string;
+}
+
 export type Lead = {
   id: string;
   name: string;
@@ -88,6 +95,7 @@ export type Lead = {
   assignedTo: string;
   createdAt: string;
   documents?: Document[];
+  history?: LeadHistory[];
 };
 
 export type User = {
