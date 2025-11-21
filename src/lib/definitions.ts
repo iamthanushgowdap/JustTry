@@ -1,37 +1,73 @@
-export type UserRole = 'sales' | 'back-office' | 'admin';
+export const UserRole = {
+    Sales: 'sales',
+    BackOffice: 'back-office',
+    Admin: 'admin',
+} as const;
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
-export type ServiceType = 'Loan' | 'Investment' | 'Insurance';
+export const ServiceType = {
+    Loan: 'Loan',
+    Investment: 'Investment',
+    Insurance: 'Insurance',
+} as const;
+export type ServiceType = (typeof ServiceType)[keyof typeof ServiceType];
 
-export type LoanSubCategory = 'Personal Loan' | 'Business Loan' | 'Home Loan' | 'Vehicle Loan';
-export type InvestmentSubCategory = 'SIP/Mutual Funds' | 'Stocks/Demat' | 'Fixed Deposits' | 'Bonds';
-export type InsuranceSubCategory = 'Health Insurance' | 'Life Insurance' | 'Vehicle Insurance' | 'Term Plans';
+export const LoanSubCategory = {
+    Personal: 'Personal Loan',
+    Business: 'Business Loan',
+    Home: 'Home Loan',
+    Vehicle: 'Vehicle Loan',
+} as const;
+export type LoanSubCategory = (typeof LoanSubCategory)[keyof typeof LoanSubCategory];
 
-export type LoanPipelineStatus =
-  | 'New'
-  | 'KYC Pending'
-  | 'Documents Needed'
-  | 'Eligibility Check'
-  | 'Approved'
-  | 'Rejected'
-  | 'Completed';
+export const InvestmentSubCategory = {
+    SIP: 'SIP/Mutual Funds',
+    Stocks: 'Stocks/Demat',
+    FD: 'Fixed Deposits',
+    Bonds: 'Bonds',
+} as const;
+export type InvestmentSubCategory = (typeof InvestmentSubCategory)[keyof typeof InvestmentSubCategory];
 
-export type InvestmentPipelineStatus =
-  | 'New'
-  | 'Risk Profiling'
-  | 'KYC Verification'
-  | 'Investment Planning'
-  | 'Portfolio Creation'
-  | 'Activated'
-  | 'Completed';
+export const InsuranceSubCategory = {
+    Health: 'Health Insurance',
+    Life: 'Life Insurance',
+    Vehicle: 'Vehicle Insurance',
+    Term: 'Term Plans',
+} as const;
+export type InsuranceSubCategory = (typeof InsuranceSubCategory)[keyof typeof InsuranceSubCategory];
 
-export type InsurancePipelineStatus =
-  | 'New'
-  | 'KYC Pending'
-  | 'Medical Check'
-  | 'Underwriting'
-  | 'Approved / Rejected'
-  | 'Policy Issued'
-  | 'Completed';
+export const LoanPipelineStatus = {
+    New: 'New',
+    KYCPending: 'KYC Pending',
+    DocumentsNeeded: 'Documents Needed',
+    EligibilityCheck: 'Eligibility Check',
+    Approved: 'Approved',
+    Rejected: 'Rejected',
+    Completed: 'Completed',
+} as const;
+export type LoanPipelineStatus = (typeof LoanPipelineStatus)[keyof typeof LoanPipelineStatus];
+
+export const InvestmentPipelineStatus = {
+    New: 'New',
+    RiskProfiling: 'Risk Profiling',
+    KYCVerification: 'KYC Verification',
+    InvestmentPlanning: 'Investment Planning',
+    PortfolioCreation: 'Portfolio Creation',
+    Activated: 'Activated',
+    Completed: 'Completed',
+} as const;
+export type InvestmentPipelineStatus = (typeof InvestmentPipelineStatus)[keyof typeof InvestmentPipelineStatus];
+
+export const InsurancePipelineStatus = {
+    New: 'New',
+    KYCPending: 'KYC Pending',
+    MedicalCheck: 'Medical Check',
+    Underwriting: 'Underwriting',
+    ApprovedRejected: 'Approved / Rejected',
+    PolicyIssued: 'Policy Issued',
+    Completed: 'Completed',
+} as const;
+export type InsurancePipelineStatus = (typeof InsurancePipelineStatus)[keyof typeof InsurancePipelineStatus];
 
 export type PipelineStatus = LoanPipelineStatus | InvestmentPipelineStatus | InsurancePipelineStatus;
 
