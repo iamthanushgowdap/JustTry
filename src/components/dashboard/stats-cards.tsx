@@ -1,14 +1,40 @@
+
+'use client';
+
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, BarChart, TrendingUp, CircleDollarSign } from 'lucide-react';
+import type { Lead } from '@/lib/definitions';
 
-const stats = [
-  { title: 'New Leads', value: '45', icon: Users, change: '+12.5%' },
-  { title: 'Conversion Rate', value: '25.3%', icon: BarChart, change: '+2.1%' },
-  { title: 'Pipeline Value', value: '$1.2M', icon: CircleDollarSign, change: '-5.2%' },
-  { title: 'Closed Deals', value: '12', icon: TrendingUp, change: '+10%' },
-];
+interface StatsCardsProps {
+  leads: Lead[];
+}
 
-export function StatsCards() {
+export function StatsCards({ leads }: StatsCardsProps) {
+  const totalLeads = leads.length;
+  const pipelineValue = leads.reduce((sum, lead) => sum + lead.value, 0);
+  const closedDeals = leads.filter(
+    (lead) => lead.status === 'Completed' || lead.status === 'Policy Issued' || lead.status === 'Approved'
+  ).length;
+  const conversionRate = totalLeads > 0 ? ((closedDeals / totalLeads) * 100).toFixed(1) : '0';
+
+  const formatValue = (value: number) => {
+    if (value >= 1_000_000) {
+      return `$${(value / 1_000_000).toFixed(1)}M`;
+    }
+    if (value >= 1_000) {
+      return `$${(value / 1_000).toFixed(0)}k`;
+    }
+    return `$${value.toLocaleString()}`;
+  };
+
+  const stats = [
+    { title: 'New Leads', value: totalLeads.toString(), icon: Users, change: 'from last month' },
+    { title: 'Conversion Rate', value: `${conversionRate}%`, icon: BarChart, change: 'from last month' },
+    { title: 'Pipeline Value', value: formatValue(pipelineValue), icon: CircleDollarSign, change: 'from last month' },
+    { title: 'Closed Deals', value: closedDeals.toString(), icon: TrendingUp, change: 'from last month' },
+  ];
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => (
@@ -19,7 +45,7 @@ export function StatsCards() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stat.value}</div>
-            <p className="text-xs text-muted-foreground">{stat.change} from last month</p>
+            <p className="text-xs text-muted-foreground">{/* Placeholder for change */}</p>
           </CardContent>
         </Card>
       ))}
