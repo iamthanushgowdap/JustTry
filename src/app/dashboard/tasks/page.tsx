@@ -1,3 +1,7 @@
+
+'use client';
+
+import * as React from 'react';
 import {
     Card,
     CardContent,
@@ -6,14 +10,9 @@ import {
     CardTitle,
   } from '@/components/ui/card';
   import { Checkbox } from '@/components/ui/checkbox';
+  import { ClipboardList } from 'lucide-react';
   
-  const tasks = [
-    { id: 'task-1', label: 'Follow up with John Doe (LEAD-001)', completed: false },
-    { id: 'task-2', label: 'Send risk profile form to Jane Smith (LEAD-002)', completed: true },
-    { id: 'task-3', label: 'Collect KYC documents from Peter Jones (LEAD-003)', completed: false },
-    { id: 'task-4', label: 'Check eligibility for Mary Williams (LEAD-004)', completed: false },
-    { id: 'task-5', label: 'Schedule portfolio review with David Brown (LEAD-005)', completed: true },
-  ];
+  const tasks: any[] = [];
   
   export default function TasksPage() {
     return (
@@ -30,6 +29,7 @@ import {
             <CardDescription>Stay on top of your work.</CardDescription>
           </CardHeader>
           <CardContent>
+          {tasks.length > 0 ? (
             <div className="space-y-4">
               {tasks.map((task) => (
                 <div key={task.id} className="flex items-center space-x-3">
@@ -45,6 +45,15 @@ import {
                 </div>
               ))}
             </div>
+             ) : (
+                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center h-[400px]">
+                    <ClipboardList className="h-12 w-12 text-muted-foreground/50" />
+                    <h3 className="mt-4 text-lg font-semibold text-muted-foreground">No Tasks Available</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Your tasks will appear here as they are assigned.
+                    </p>
+                </div>
+            )}
           </CardContent>
         </Card>
       </div>

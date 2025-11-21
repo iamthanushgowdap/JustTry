@@ -1,5 +1,6 @@
+
 'use client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   BarChart,
   Bar,
@@ -10,12 +11,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { TrendingDown } from 'lucide-react';
 
-const performanceData = [
-  { name: 'Alex Sales', leads: 45, closed: 12 },
-  { name: 'Sam Jones', leads: 32, closed: 8 },
-  { name: 'Jessie Smith', leads: 28, closed: 10 },
-];
+const performanceData: any[] = [];
 
 export default function PerformancePage() {
   return (
@@ -32,17 +30,27 @@ export default function PerformancePage() {
         </CardHeader>
         <CardContent>
           <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="leads" fill="hsl(var(--primary))" name="Total Leads" />
-                <Bar dataKey="closed" fill="hsl(var(--accent-foreground))" name="Deals Closed" />
-              </BarChart>
-            </ResponsiveContainer>
+            {performanceData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={performanceData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="leads" fill="hsl(var(--primary))" name="Total Leads" />
+                    <Bar dataKey="closed" fill="hsl(var(--accent-foreground))" name="Deals Closed" />
+                </BarChart>
+                </ResponsiveContainer>
+            ) : (
+                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 p-12 text-center h-full">
+                    <TrendingDown className="h-12 w-12 text-muted-foreground/50" />
+                    <h3 className="mt-4 text-lg font-semibold text-muted-foreground">No Performance Data</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Performance data will be shown here once there are leads and activities.
+                    </p>
+                </div>
+            )}
           </div>
         </CardContent>
       </Card>
