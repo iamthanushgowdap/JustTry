@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import {
     Table,
     TableBody,
@@ -13,10 +14,18 @@ import {
   import { Badge } from '@/components/ui/badge';
   import { Button } from '@/components/ui/button';
   import { FileCheck2 } from 'lucide-react';
-  
-  const verificationQueue: any[] = [];
+  import { getLeads } from '@/lib/data';
+  import type { Lead } from '@/lib/definitions';
   
   export default function VerificationPage() {
+    const [verificationQueue, setVerificationQueue] = React.useState<Lead[]>([]);
+
+    React.useEffect(() => {
+        const allLeads = getLeads();
+        const filteredLeads = allLeads.filter(lead => lead.status !== 'New');
+        setVerificationQueue(filteredLeads);
+    }, []);
+
     return (
       <div className="space-y-8">
         <div>
@@ -43,7 +52,7 @@ import {
                     <TableRow key={item.id}>
                         <TableCell>{item.id}</TableCell>
                         <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.service}</TableCell>
+                        <TableCell>{item.serviceType}</TableCell>
                         <TableCell>
                         <Badge variant="outline">{item.status}</Badge>
                         </TableCell>
