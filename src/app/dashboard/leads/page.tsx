@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import { getLeads, saveLeads } from '@/lib/data';
-import type { Lead } from '@/lib/definitions';
+import type { Lead, Document } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -18,9 +18,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -29,11 +30,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { LeadForm } from '@/components/dashboard/lead-form';
+import { DocumentUploadDialog } from '@/components/dashboard/document-upload-dialog';
 
 export default function LeadsPage() {
   const [leads, setLeads] = React.useState<Lead[]>([]);
   const [isFormOpen, setIsFormOpen] = React.useState(false);
+  const [isUploadOpen, setIsUploadOpen] = React.useState(false);
   const [editingLead, setEditingLead] = React.useState<Lead | undefined>(undefined);
+  const [uploadLead, setUploadLead] = React.useState<Lead | undefined>(undefined);
 
   React.useEffect(() => {
     setLeads(getLeads());
@@ -44,7 +48,7 @@ export default function LeadsPage() {
     if (editingLead) {
       updatedLeads = leads.map((l) => (l.id === lead.id ? lead : l));
     } else {
-      updatedLeads = [...leads, { ...lead, id: `LEAD-${Date.now()}` }];
+      updatedLeads = [...leads, { ...lead, id: `LEAD-${Date.now()}`, createdAt: new Date().toISOString() }];
     }
     setLeads(updatedLeads);
     saveLeads(updatedLeads);
@@ -63,6 +67,17 @@ export default function LeadsPage() {
     saveLeads(updatedLeads);
   };
 
+  const handleOpenUpload = (lead: Lead) => {
+    setUploadLead(lead);
+    setIsUploadOpen(true);
+  };
+
+  const handleDocumentUpload = (leadId: string, documents: Document[]) => {
+    const updatedLeads = leads.map(l => l.id === leadId ? { ...l, documents } : l);
+    setLeads(updatedLeads);
+    saveLeads(updatedLeads);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -72,9 +87,12 @@ export default function LeadsPage() {
             Manage your leads and track their progress.
           </p>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
+          setIsFormOpen(isOpen);
+          if (!isOpen) setEditingLead(undefined);
+        }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingLead(undefined)}>
+            <Button onClick={() => { setEditingLead(undefined); setIsFormOpen(true); } }>
               <PlusCircle className="mr-2 h-4 w-4" />
               New Lead
             </Button>
@@ -118,7 +136,7 @@ export default function LeadsPage() {
                   </TableCell>
                   <TableCell>${lead.value.toLocaleString()}</TableCell>
                   <TableCell>{lead.assignedTo}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -128,7 +146,17 @@ export default function LeadsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEdit(lead)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(lead.id)}>Delete</DropdownMenuItem>
+                        {lead.status === 'Documents Needed' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleOpenUpload(lead)}>
+                              <Upload className="mr-2 h-4 w-4" />
+                              Upload Documents
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(lead.id)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -138,6 +166,14 @@ export default function LeadsPage() {
           </Table>
         </CardContent>
       </Card>
+      {uploadLead && (
+        <DocumentUploadDialog 
+            isOpen={isUploadOpen}
+            setIsOpen={setIsUploadOpen}
+            lead={uploadLead}
+            onUpload={handleDocumentUpload}
+        />
+      )}
     </div>
   );
 }

@@ -71,6 +71,11 @@ export type InsurancePipelineStatus = (typeof InsurancePipelineStatus)[keyof typ
 
 export type PipelineStatus = LoanPipelineStatus | InvestmentPipelineStatus | InsurancePipelineStatus;
 
+export type Document = {
+    name: string;
+    url: string;
+};
+
 export type Lead = {
   id: string;
   name: string;
@@ -82,6 +87,7 @@ export type Lead = {
   value: number;
   assignedTo: string;
   createdAt: string;
+  documents?: Document[];
 };
 
 export type User = {
