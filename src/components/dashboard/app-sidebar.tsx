@@ -66,7 +66,7 @@ export function AppSidebar({ user }: { user: User }) {
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.name}>
-              <Link href={item.href} legacyBehavior passHref>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname === item.href}
                   className="w-full justify-start"
