@@ -78,7 +78,7 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
     Loan: Object.values(LoanPipelineStatus),
     Investment: Object.values(InvestmentPipelineStatus),
     Insurance: Object.values(InsurancePipelineStatus),
-  }
+  };
 
   function onSubmit(data: LeadFormValues) {
     onSave(data as Lead);
