@@ -31,7 +31,7 @@ export default function DashboardLayout({
         <main className="flex flex-1 flex-col">
           {userRole && <Header userRole={userRole} />}
           <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-background">
-            <div className="w-full">{children}</div>
+            <div className="max-w-7xl mx-auto w-full">{children}</div>
           </div>
         </main>
       </div>
