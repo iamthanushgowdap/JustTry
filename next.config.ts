@@ -2,6 +2,7 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  allowedDevOrigins: ['127.0.0.1:49869', '127.0.0.1:56210'],
   typescript: {
     ignoreBuildErrors: true,
   },

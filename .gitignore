@@ -43,3 +43,9 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# unnecessary for deployment
+.modified
+database-update.sql
+test-connection.js
+.idx/

@@ -27,7 +27,8 @@ import {
 } from 'lucide-react';
 import type { User, UserRole } from '@/lib/definitions';
 import { logout } from '@/lib/actions';
-import { getUser } from '@/lib/data';
+import { getUserByEmail } from '@/lib/data';
+import { supabase } from '@/lib/supabase';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Skeleton } from '../ui/skeleton';
 
@@ -41,24 +42,31 @@ const salesNav = [
 const backOfficeNav = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Verification Queue', href: '/dashboard/verification', icon: FileText },
-    { name: 'Assigned Tasks', href: '/dashboard/tasks', icon: ClipboardCheck },
+    { name: 'Assigned Tasks', href: '/dashboard/back-office/tasks', icon: ClipboardCheck },
 ];
 
 const adminNav = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'All Leads', href: '/dashboard/leads', icon: Users },
-  { name: 'Team Performance', href: '/dashboard/performance', icon: BarChart },
-  { name: 'User Management', href: '/dashboard/users', icon: Briefcase },
+  { name: 'Team Performance', href: '/dashboard/admin/performance', icon: BarChart },
+  { name: 'User Management', href: '/dashboard/admin/users', icon: Briefcase },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
-export function AppSidebar({ userRole }: { userRole: UserRole }) {
+export function AppSidebar({}: {}) {
   const pathname = usePathname();
   const [user, setUser] = React.useState<User | null>(null);
 
   React.useEffect(() => {
-    setUser(getUser(userRole));
-  }, [userRole]);
+    async function fetchUser() {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser?.email) {
+        const userData = await getUserByEmail(authUser.email);
+        setUser(userData);
+      }
+    }
+    fetchUser();
+  }, []);
 
   if (!user) {
     return (

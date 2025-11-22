@@ -22,9 +22,12 @@ import {
     const router = useRouter();
 
     React.useEffect(() => {
-        const allLeads = getLeads();
-        const filteredLeads = allLeads.filter(lead => lead.status !== 'New');
-        setVerificationQueue(filteredLeads);
+        async function fetchLeads() {
+            const allLeads = await getLeads();
+            const filteredLeads = allLeads.filter(lead => lead.status !== 'New');
+            setVerificationQueue(filteredLeads);
+        }
+        fetchLeads();
     }, []);
 
     const handleProcessClick = (leadId: string) => {

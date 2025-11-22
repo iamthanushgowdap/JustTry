@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { Lead } from '@/lib/definitions';
+import { getSalesUsers } from '@/lib/data';
+import type { Lead, User } from '@/lib/definitions';
 import { ServiceType, LoanSubCategory, InvestmentSubCategory, InsuranceSubCategory, LoanPipelineStatus, InvestmentPipelineStatus, InsurancePipelineStatus } from '@/lib/definitions';
 
 const leadSchema = z.object({
@@ -33,7 +34,7 @@ const leadSchema = z.object({
   subCategory: z.string().min(1, { message: 'Sub-category is required.' }),
   status: z.string().min(1, { message: 'Status is required.' }),
   value: z.coerce.number().min(0, { message: 'Value must be a positive number.' }),
-  assignedTo: z.string().min(1, { message: 'Assigned user is required.' }),
+  assignedTo: z.string().optional(),
   createdAt: z.string().optional(),
   documents: z.array(z.object({ name: z.string(), url: z.string() })).optional(),
   history: z.array(z.object({
@@ -52,6 +53,10 @@ interface LeadFormProps {
 }
 
 export function LeadForm({ onSave, lead }: LeadFormProps) {
+  const [salesUsers, setSalesUsers] = React.useState<User[]>([]);
+
+  console.log('LeadForm rendered with lead:', lead);
+
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
     defaultValues: lead || {
@@ -62,9 +67,68 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
       subCategory: '',
       status: 'New',
       value: 0,
-      assignedTo: 'Alex Sales',
+      assignedTo: '',
+      documents: [],
+      history: [],
     },
   });
+
+  React.useEffect(() => {
+    async function fetchSalesUsers() {
+      console.log('Fetching sales users...');
+      const users = await getSalesUsers();
+      console.log('Fetched sales users:', users.length, 'users');
+      setSalesUsers(users);
+    }
+    fetchSalesUsers();
+  }, []);
+
+  // Reset form when lead prop changes (for editing)
+  React.useEffect(() => {
+    console.log('Lead prop changed, resetting form with:', lead);
+    if (lead) {
+      // Ensure documents is always an array
+      const safeLead = {
+        ...lead,
+        documents: lead.documents || [],
+        history: lead.history || [],
+      };
+      form.reset(safeLead);
+    } else {
+      form.reset({
+        name: '',
+        email: '',
+        phone: '',
+        serviceType: 'Loan',
+        subCategory: '',
+        status: 'New',
+        value: 0,
+        assignedTo: '',
+        documents: [],
+        history: [],
+      });
+    }
+  }, [lead, form]);
+
+  console.log('Lead prop:', lead);
+  console.log('Form defaultValues would be:', lead || {
+    name: '',
+    email: '',
+    phone: '',
+    serviceType: 'Loan',
+    subCategory: '',
+    status: 'New',
+    value: 0,
+    assignedTo: '',
+    documents: [],
+    history: [],
+  });
+  console.log('Form errors:', form.formState.errors);
+  if (form.formState.errors.documents) {
+    console.log('Documents error details:', form.formState.errors.documents);
+  }
+  console.log('Form values:', form.getValues());
+  console.log('Documents value:', form.getValues('documents'));
 
   const serviceType = form.watch('serviceType');
 
@@ -81,12 +145,21 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
   };
   
   function onSubmit(data: LeadFormValues) {
+    console.log('LeadForm onSubmit called with data:', data);
+    console.log('Form is valid, proceeding to save...');
     onSave(data as Lead);
   }
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Form submit event triggered');
+    
+    form.handleSubmit(onSubmit)(e);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleFormSubmit} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
@@ -133,7 +206,7 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Service Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a service type" />
@@ -155,11 +228,11 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Sub-category</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a sub-category" />
-                    </Trigger>
+                    </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                     {subCategories[serviceType as keyof typeof subCategories].map(sub => (
@@ -178,11 +251,11 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a status" />
-                    </Trigger>
+                    </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                     {statuses[serviceType as keyof typeof statuses].map(s => (
@@ -203,6 +276,30 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
               <FormControl>
                 <Input type="number" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="assignedTo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Assigned To (Optional)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a sales user" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {salesUsers.map(user => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name} {user.department ? `(${user.department})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

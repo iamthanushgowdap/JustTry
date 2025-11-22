@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Lead, Document } from '@/lib/definitions';
 import { Upload, File, X } from 'lucide-react';
+import { uploadDocument } from '@/lib/data';
 
 interface DocumentUploadDialogProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export function DocumentUploadDialog({
   const { toast } = useToast();
   const [files, setFiles] = React.useState<File[]>([]);
   const [existingDocuments, setExistingDocuments] = React.useState<Document[]>(lead.documents || []);
+  const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,23 +42,57 @@ export function DocumentUploadDialog({
     }
   };
 
-  const handleUpload = () => {
-    // This is a simulation. In a real app, you'd upload to a server/storage.
-    const newDocuments: Document[] = files.map((file) => ({
-      name: file.name,
-      url: `simulated-path/${lead.id}/${file.name}`,
-    }));
+  const handleUpload = async () => {
+    if (files.length === 0) return;
 
-    const allDocuments = [...existingDocuments, ...newDocuments];
-    onUpload(lead.id, allDocuments);
+    setIsUploading(true);
 
-    toast({
-      title: 'Upload Successful',
-      description: `${files.length} document(s) have been uploaded for ${lead.name}.`,
-    });
+    try {
+      const uploadedDocuments: Document[] = [];
 
-    setFiles([]);
-    setIsOpen(false);
+      // Upload each file to Supabase storage
+      for (const file of files) {
+        console.log('Uploading file:', file.name);
+        const result = await uploadDocument(file, lead.id);
+
+        if (result) {
+          uploadedDocuments.push(result);
+          console.log('Successfully uploaded:', result.name);
+        } else {
+          console.error('Failed to upload:', file.name);
+          toast({
+            title: 'Upload Failed',
+            description: `Failed to upload ${file.name}. Please try again.`,
+            variant: 'destructive',
+          });
+        }
+      }
+
+      if (uploadedDocuments.length > 0) {
+        // Combine with existing documents
+        const allDocuments = [...existingDocuments, ...uploadedDocuments];
+
+        // Update the lead with new documents
+        onUpload(lead.id, allDocuments);
+
+        toast({
+          title: 'Upload Successful',
+          description: `${uploadedDocuments.length} document(s) have been uploaded for ${lead.name}.`,
+        });
+
+        // Clear the uploaded files
+        setFiles([]);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload Error',
+        description: 'An error occurred while uploading documents. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   const removeNewFile = (index: number) => {
@@ -124,9 +160,9 @@ export function DocumentUploadDialog({
 
         </div>
         <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-            <Button onClick={handleUpload} disabled={files.length === 0}>
-                Upload {files.length > 0 && `(${files.length})`}
+            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isUploading}>Cancel</Button>
+            <Button onClick={handleUpload} disabled={files.length === 0 || isUploading}>
+                {isUploading ? 'Uploading...' : `Upload ${files.length > 0 ? `(${files.length})` : ''}`}
             </Button>
         </DialogFooter>
       </DialogContent>

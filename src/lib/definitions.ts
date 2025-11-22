@@ -43,7 +43,6 @@ export const LoanPipelineStatus = {
     EligibilityCheck: 'Eligibility Check',
     Approved: 'Approved',
     Rejected: 'Rejected',
-    Completed: 'Completed',
 } as const;
 export type LoanPipelineStatus = (typeof LoanPipelineStatus)[keyof typeof LoanPipelineStatus];
 
@@ -54,7 +53,6 @@ export const InvestmentPipelineStatus = {
     InvestmentPlanning: 'Investment Planning',
     PortfolioCreation: 'Portfolio Creation',
     Activated: 'Activated',
-    Completed: 'Completed',
 } as const;
 export type InvestmentPipelineStatus = (typeof InvestmentPipelineStatus)[keyof typeof InvestmentPipelineStatus];
 
@@ -65,7 +63,6 @@ export const InsurancePipelineStatus = {
     Underwriting: 'Underwriting',
     ApprovedRejected: 'Approved / Rejected',
     PolicyIssued: 'Policy Issued',
-    Completed: 'Completed',
 } as const;
 export type InsurancePipelineStatus = (typeof InsurancePipelineStatus)[keyof typeof InsurancePipelineStatus];
 
@@ -81,7 +78,31 @@ export type LeadHistory = {
     timestamp: string;
     user: string;
     remarks?: string;
+    cibilData?: any; // Optional CIBIL score data
 }
+
+export type BankDetails = {
+  accountHolderName: string;
+  accountNumber: string;
+  bankName: string;
+  ifscCode: string;
+  branchName?: string;
+  accountType: 'savings' | 'current';
+  verifiedBy?: string; // User ID who verified
+  verifiedAt?: string;
+};
+
+export type Disbursement = {
+  id: string;
+  amount: number;
+  referenceId: string;
+  status: 'initiated' | 'processing' | 'completed' | 'failed';
+  initiatedBy: string; // User ID
+  initiatedAt: string;
+  completedAt?: string;
+  failureReason?: string;
+  gatewayResponse?: any;
+};
 
 export type Lead = {
   id: string;
@@ -90,17 +111,26 @@ export type Lead = {
   phone: string;
   serviceType: ServiceType;
   subCategory: LoanSubCategory | InvestmentSubCategory | InsuranceSubCategory;
-  status: PipelineStatus;
+  status: string; // Changed from PipelineStatus to string to match database schema
   value: number;
   assignedTo: string;
   createdAt: string;
+  updatedAt?: string;
   documents?: Document[];
   history?: LeadHistory[];
+  bankDetails?: BankDetails;
+  disbursements?: Disbursement[];
 };
 
 export type User = {
   id: string;
   name: string;
+  email: string;
   role: UserRole;
-  avatar: string;
+  avatar?: string;
+  phone?: string;
+  department?: string;
+  joinDate?: string;
+  manager?: string;
+  serviceTypes?: ServiceType[]; // For back-office users to specify which service types they handle
 };

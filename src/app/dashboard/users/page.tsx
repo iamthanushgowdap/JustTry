@@ -38,10 +38,14 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = React.useState<User | undefined>(undefined);
 
   React.useEffect(() => {
-    setUsers(getUsers());
+    async function fetchUsers() {
+      const usersData = await getUsers();
+      setUsers(usersData);
+    }
+    fetchUsers();
   }, []);
 
-  const handleSaveUser = (user: User) => {
+  const handleSaveUser = async (user: User) => {
     let updatedUsers;
     if (editingUser) {
         updatedUsers = users.map((u) => (u.id === user.id ? user : u));
@@ -49,7 +53,7 @@ export default function UsersPage() {
         updatedUsers = [...users, { ...user, id: `USER-${Date.now()}` }];
     }
     setUsers(updatedUsers);
-    saveUsers(updatedUsers);
+    await saveUsers(updatedUsers);
     setIsFormOpen(false);
     setEditingUser(undefined);
   };
@@ -59,10 +63,10 @@ export default function UsersPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const updatedUsers = users.filter(u => u.id !== id);
     setUsers(updatedUsers);
-    saveUsers(updatedUsers);
+    await saveUsers(updatedUsers);
   };
 
   return (

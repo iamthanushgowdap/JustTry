@@ -2,8 +2,9 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { getLeads, saveLeads } from '@/lib/data';
-import type { Lead, Document } from '@/lib/definitions';
+import { getLeads, getLeadsByAssignedUser, getUserByEmail, getSalesUsers, saveLeads } from '../../../lib/data';
+import { supabase } from '@/lib/supabase';
+import type { Lead, Document, UserRole } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -22,37 +23,97 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Upload, Eye } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Upload, Eye, CheckCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { LeadForm } from '@/components/dashboard/lead-form';
 import { DocumentUploadDialog } from '@/components/dashboard/document-upload-dialog';
+import { CibilCheckDialog } from '@/components/dashboard/cibil-check-dialog';
 
 export default function LeadsPage() {
   const [leads, setLeads] = React.useState<Lead[]>([]);
+  const [userRole, setUserRole] = React.useState<UserRole | null>(null);
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [isUploadOpen, setIsUploadOpen] = React.useState(false);
   const [editingLead, setEditingLead] = React.useState<Lead | undefined>(undefined);
   const [uploadLead, setUploadLead] = React.useState<Lead | undefined>(undefined);
+  const [salesUsers, setSalesUsers] = React.useState<any[]>([]);
+  const [isCibilOpen, setIsCibilOpen] = React.useState(false);
+  const [cibilLead, setCibilLead] = React.useState<Lead | undefined>(undefined);
   const router = useRouter();
 
   React.useEffect(() => {
-    setLeads(getLeads());
+    async function fetchData() {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      let role: UserRole = 'sales';
+      let userId: string | null = null;
+      let userServiceTypes: string[] = [];
+
+      if (authUser?.email) {
+        const userData = await getUserByEmail(authUser.email);
+        role = userData?.role || 'sales';
+        userId = userData?.id || null;
+        userServiceTypes = userData?.serviceTypes || [];
+        console.log('User data:', { role, userId, userServiceTypes, email: authUser.email });
+      }
+
+      setUserRole(role);
+
+      let filteredLeads: Lead[] = [];
+
+      if (role === 'sales' && userId) {
+        // Sales users only see their assigned leads
+        filteredLeads = await getLeadsByAssignedUser(userId);
+      } else if (role === 'back-office') {
+        // Back-office users see leads of their assigned service types, excluding 'New' status
+        const allLeads = await getLeads();
+        console.log('All leads:', allLeads.map(l => ({ id: l.id, serviceType: l.serviceType, status: l.status })));
+
+        filteredLeads = allLeads.filter(lead => {
+          const matchesStatus = lead.status !== 'New';
+          const matchesServiceType = userServiceTypes.length === 0 || userServiceTypes.includes(lead.serviceType);
+          const shouldInclude = matchesStatus && matchesServiceType;
+
+          console.log(`Lead ${lead.id}: status=${lead.status} (${matchesStatus ? '✓' : '✗'}), serviceType=${lead.serviceType} (${matchesServiceType ? '✓' : '✗'}) → ${shouldInclude ? 'INCLUDE' : 'EXCLUDE'}`);
+
+          return shouldInclude;
+        });
+
+        console.log('Filtered leads for back-office:', filteredLeads.map(l => ({ id: l.id, serviceType: l.serviceType, status: l.status })));
+      } else {
+        // Admin and other roles see all leads
+        filteredLeads = await getLeads();
+      }
+
+      const salesUsersData = await getSalesUsers();
+      setLeads(filteredLeads);
+      setSalesUsers(salesUsersData);
+    }
+    fetchData();
   }, []);
 
-  const handleSaveLead = (lead: Lead) => {
+  const handleSaveLead = async (lead: Lead) => {
+    console.log('handleSaveLead called with lead:', lead);
+    console.log('editingLead:', editingLead);
+    
     let updatedLeads;
     const timestamp = new Date().toISOString();
     
+    // Always fetch all leads from database to ensure we don't lose data
+    const allLeads = await getLeads();
+    console.log('Fetched all leads from DB, count:', allLeads.length);
+    
     if (editingLead) {
-      updatedLeads = leads.map((l) => (l.id === lead.id ? lead : l));
-      // You might want to add a history item for editing, but for now we focus on status changes.
+      console.log('Editing existing lead');
+      updatedLeads = allLeads.map((l) => (l.id === lead.id ? lead : l));
     } else {
+      console.log('Creating new lead');
       const newLead = { 
         ...lead, 
         id: `LEAD-${Date.now()}`, 
@@ -64,12 +125,47 @@ export default function LeadsPage() {
           remarks: 'Lead created.'
         }]
       };
-      updatedLeads = [...leads, newLead];
+      updatedLeads = [...allLeads, newLead];
     }
-    setLeads(updatedLeads);
-    saveLeads(updatedLeads);
-    setIsFormOpen(false);
-    setEditingLead(undefined);
+    
+    console.log('Updated leads count:', updatedLeads.length);
+    
+    try {
+      console.log('Calling saveLeads...');
+      await saveLeads(updatedLeads);
+      console.log('saveLeads completed successfully');
+      
+      // Update local state with filtered leads again
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      let userId: string | null = null;
+      let role: UserRole = 'sales';
+      let userServiceTypes: string[] = [];
+      
+      if (authUser?.email) {
+        const userData = await getUserByEmail(authUser.email);
+        role = userData?.role || 'sales';
+        userId = userData?.id || null;
+        userServiceTypes = userData?.serviceTypes || [];
+      }
+      
+      let refilteredLeads: Lead[] = [];
+      if (role === 'sales' && userId) {
+        refilteredLeads = await getLeadsByAssignedUser(userId);
+      } else if (role === 'back-office') {
+        refilteredLeads = allLeads.filter(lead =>
+          lead.status !== 'New' &&
+          (userServiceTypes.length === 0 || userServiceTypes.includes(lead.serviceType))
+        );
+      } else {
+        refilteredLeads = allLeads;
+      }
+      
+      setLeads(refilteredLeads);
+      setIsFormOpen(false);
+      setEditingLead(undefined);
+    } catch (error) {
+      console.error('Error in handleSaveLead:', error);
+    }
   };
 
   const handleEdit = (lead: Lead) => {
@@ -77,10 +173,10 @@ export default function LeadsPage() {
     setIsFormOpen(true);
   };
   
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const updatedLeads = leads.filter(l => l.id !== id);
     setLeads(updatedLeads);
-    saveLeads(updatedLeads);
+    await saveLeads(updatedLeads);
   };
 
   const handleOpenUpload = (lead: Lead) => {
@@ -88,15 +184,52 @@ export default function LeadsPage() {
     setIsUploadOpen(true);
   };
 
-  const handleDocumentUpload = (leadId: string, documents: Document[]) => {
+  const handleDocumentUpload = async (leadId: string, documents: Document[]) => {
     const updatedLeads = leads.map(l => l.id === leadId ? { ...l, documents } : l);
     setLeads(updatedLeads);
-    saveLeads(updatedLeads);
+    await saveLeads(updatedLeads);
+  };
+
+  const handleOpenCibil = (lead: Lead) => {
+    setCibilLead(lead);
+    setIsCibilOpen(true);
+  };
+
+  const handleCibilCheck = async (leadId: string, cibilData: any) => {
+    const timestamp = new Date().toISOString();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    let currentUserId = 'system';
+
+    if (authUser?.email) {
+      const userData = await getUserByEmail(authUser.email);
+      currentUserId = userData?.id || 'system';
+    }
+
+    const cibilHistoryEntry = {
+      status: 'Eligibility Check',
+      timestamp,
+      user: currentUserId,
+      remarks: `CIBIL Score: ${cibilData.score} (${cibilData.riskCategory}). Total accounts: ${cibilData.totalAccounts}, Overdue: ${cibilData.overdueAccounts}`,
+      cibilData: cibilData, // Store full CIBIL data for viewing
+    };
+
+    const updatedLeads = leads.map(l => l.id === leadId ? {
+      ...l,
+      history: [...(l.history || []), cibilHistoryEntry]
+    } : l);
+
+    setLeads(updatedLeads);
+    await saveLeads(updatedLeads);
   };
 
   const handleViewDetails = (leadId: string) => {
     router.push(`/dashboard/leads/${leadId}`);
   }
+
+  const getUserNameById = (userId: string) => {
+    const user = salesUsers.find(u => u.id === userId);
+    return user ? `${user.name}${user.department ? ` (${user.department})` : ''}` : userId;
+  };
 
   return (
     <div className="space-y-8">
@@ -107,7 +240,7 @@ export default function LeadsPage() {
             Manage your leads and track their progress.
           </p>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
+        <Dialog open={isFormOpen} onOpenChange={(isOpen: boolean) => {
           setIsFormOpen(isOpen);
           if (!isOpen) setEditingLead(undefined);
         }}>
@@ -120,6 +253,9 @@ export default function LeadsPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingLead ? 'Edit Lead' : 'Create New Lead'}</DialogTitle>
+              <DialogDescription>
+                {editingLead ? 'Update the lead information.' : 'Fill in the details to create a new lead.'}
+              </DialogDescription>
             </DialogHeader>
             <LeadForm 
               onSave={handleSaveLead} 
@@ -130,7 +266,8 @@ export default function LeadsPage() {
       </div>
       <Card>
         <CardContent className="pt-6">
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Customer</TableHead>
@@ -155,7 +292,7 @@ export default function LeadsPage() {
                     <Badge variant="outline">{lead.status}</Badge>
                   </TableCell>
                   <TableCell>${lead.value.toLocaleString()}</TableCell>
-                  <TableCell>{lead.assignedTo}</TableCell>
+                  <TableCell>{getUserNameById(lead.assignedTo)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -179,6 +316,15 @@ export default function LeadsPage() {
                             </DropdownMenuItem>
                           </>
                         )}
+                        {lead.status === 'Eligibility Check' && lead.serviceType === 'Loan' && (userRole === 'back-office' || userRole === 'admin') && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleOpenCibil(lead)}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Run CIBIL Check
+                            </DropdownMenuItem>
+                          </>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(lead.id)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
@@ -188,6 +334,7 @@ export default function LeadsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
       {uploadLead && (
@@ -196,6 +343,14 @@ export default function LeadsPage() {
             setIsOpen={setIsUploadOpen}
             lead={uploadLead}
             onUpload={handleDocumentUpload}
+        />
+      )}
+      {cibilLead && (
+        <CibilCheckDialog
+            isOpen={isCibilOpen}
+            setIsOpen={setIsCibilOpen}
+            lead={cibilLead}
+            onCibilCheck={handleCibilCheck}
         />
       )}
     </div>
