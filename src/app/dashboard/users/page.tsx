@@ -81,7 +81,7 @@ export default function UsersPage() {
                     Add User
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
                 </DialogHeader>
@@ -89,9 +89,10 @@ export default function UsersPage() {
             </DialogContent>
         </Dialog>
       </div>
-      <Card>
-        <CardContent className="pt-6">
-          <Table>
+      <Card className="shadow-xs overflow-hidden w-full">
+        <CardContent className="p-0 overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
@@ -132,6 +133,7 @@ export default function UsersPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -14,7 +13,11 @@ export function StatsCards({ leads }: StatsCardsProps) {
   const totalLeads = leads.length;
   const pipelineValue = leads.reduce((sum, lead) => sum + lead.value, 0);
   const closedDeals = leads.filter(
-    (lead) => lead.status === 'Completed' || lead.status === 'Policy Issued' || lead.status === 'Approved'
+    (lead) =>
+      lead.status === 'Completed' ||
+      lead.status === 'Policy Issued' ||
+      lead.status === 'Approved' ||
+      lead.status === 'Activated'
   ).length;
   const conversionRate = totalLeads > 0 ? ((closedDeals / totalLeads) * 100).toFixed(1) : '0';
 
@@ -29,23 +32,23 @@ export function StatsCards({ leads }: StatsCardsProps) {
   };
 
   const stats = [
-    { title: 'New Leads', value: totalLeads.toString(), icon: Users, change: 'from last month' },
-    { title: 'Conversion Rate', value: `${conversionRate}%`, icon: BarChart, change: 'from last month' },
-    { title: 'Pipeline Value', value: formatValue(pipelineValue), icon: CircleDollarSign, change: 'from last month' },
-    { title: 'Closed Deals', value: closedDeals.toString(), icon: TrendingUp, change: 'from last month' },
+    { title: 'Total Leads', value: totalLeads.toString(), icon: Users, desc: 'Active pipeline volume', color: 'text-sky-500' },
+    { title: 'Conversion Rate', value: `${conversionRate}%`, icon: BarChart, desc: `${closedDeals} closed deals`, color: 'text-emerald-500' },
+    { title: 'Pipeline Value', value: formatValue(pipelineValue), icon: CircleDollarSign, desc: 'Gross portfolio value', color: 'text-purple-500' },
+    { title: 'Deals Closed', value: closedDeals.toString(), icon: TrendingUp, desc: 'Finalized accounts', color: 'text-amber-500' },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => (
-        <Card key={stat.title}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-            <stat.icon className="h-4 w-4 text-muted-foreground" />
+        <Card key={stat.title} className="shadow-xs overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+            <stat.icon className={`h-4 w-4 ${stat.color} shrink-0`} />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
-            <p className="text-xs text-muted-foreground">{/* Placeholder for change */}</p>
+          <CardContent className="px-4 pb-4">
+            <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{stat.value}</div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{stat.desc}</p>
           </CardContent>
         </Card>
       ))}

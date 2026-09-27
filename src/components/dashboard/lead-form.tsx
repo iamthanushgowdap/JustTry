@@ -126,7 +126,7 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField
             control={form.control}
             name="serviceType"
@@ -159,7 +159,7 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a sub-category" />
-                    </Trigger>
+                    </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                     {subCategories[serviceType as keyof typeof subCategories].map(sub => (
@@ -182,7 +182,7 @@ export function LeadForm({ onSave, lead }: LeadFormProps) {
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a status" />
-                    </Trigger>
+                    </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                     {statuses[serviceType as keyof typeof statuses].map(s => (

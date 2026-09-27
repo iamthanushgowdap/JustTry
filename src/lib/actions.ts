@@ -7,22 +7,34 @@ import type { UserRole } from './definitions';
 const SESSION_COOKIE_NAME = 'justtry_session';
 
 export async function login(role: UserRole) {
-  cookies().set(SESSION_COOKIE_NAME, JSON.stringify({ role }), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 7, // One week
-    path: '/',
-  });
-  redirect('/dashboard');
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify({ role }), {
+      httpOnly: false,
+      sameSite: 'lax',
+      secure: false,
+      maxAge: 60 * 60 * 24 * 7, // One week
+      path: '/',
+    });
+  } catch (err) {
+    console.error('Error setting session cookie:', err);
+  }
+  return { success: true, role };
 }
 
 export async function logout() {
-  cookies().delete(SESSION_COOKIE_NAME);
-  redirect('/');
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete(SESSION_COOKIE_NAME);
+  } catch (err) {
+    console.error('Error removing session cookie:', err);
+  }
+  return { success: true };
 }
 
 export async function getSession() {
-  const sessionCookie = cookies().get(SESSION_COOKIE_NAME);
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
   if (!sessionCookie) {
     return null;
   }

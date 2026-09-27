@@ -75,7 +75,7 @@ export function DocumentUploadDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Upload Documents for {lead.name}</DialogTitle>
           <DialogDescription>
@@ -97,23 +97,23 @@ export function DocumentUploadDialog({
                     <h4 className="text-sm font-medium">Files</h4>
                     <div className="space-y-2 rounded-md border p-2">
                         {existingDocuments.map((doc, index) => (
-                            <div key={`existing-${index}`} className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-2">
-                                    <File className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">{doc.name}</span>
+                            <div key={`existing-${index}`} className="flex items-center justify-between text-sm gap-2">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <File className="h-4 w-4 text-muted-foreground shrink-0" />
+                                    <span className="font-medium truncate">{doc.name}</span>
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeExistingFile(index)}>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeExistingFile(index)}>
                                     <X className="h-4 w-4" />
                                 </Button>
                             </div>
                         ))}
                         {files.map((file, index) => (
-                            <div key={`new-${index}`} className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-2">
-                                    <File className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">{file.name}</span>
+                            <div key={`new-${index}`} className="flex items-center justify-between text-sm gap-2">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <File className="h-4 w-4 text-muted-foreground shrink-0" />
+                                    <span className="font-medium truncate">{file.name}</span>
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeNewFile(index)}>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeNewFile(index)}>
                                     <X className="h-4 w-4" />
                                 </Button>
                             </div>

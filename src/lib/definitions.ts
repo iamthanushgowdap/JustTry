@@ -71,9 +71,16 @@ export type InsurancePipelineStatus = (typeof InsurancePipelineStatus)[keyof typ
 
 export type PipelineStatus = LoanPipelineStatus | InvestmentPipelineStatus | InsurancePipelineStatus;
 
+export type DocumentStatus = 'Pending' | 'Verified' | 'Rejected';
+
 export type Document = {
+    id?: string;
     name: string;
     url: string;
+    uploadedAt?: string;
+    status?: DocumentStatus;
+    verifiedBy?: string;
+    notes?: string;
 };
 
 export type LeadHistory = {
@@ -81,7 +88,7 @@ export type LeadHistory = {
     timestamp: string;
     user: string;
     remarks?: string;
-}
+};
 
 export type Lead = {
   id: string;
@@ -94,8 +101,47 @@ export type Lead = {
   value: number;
   assignedTo: string;
   createdAt: string;
+  companyName?: string;
+  annualIncome?: number;
+  panOrId?: string;
+  notes?: string;
   documents?: Document[];
   history?: LeadHistory[];
+};
+
+export type TaskPriority = 'high' | 'medium' | 'low';
+
+export type Task = {
+  id: string;
+  title: string;
+  description?: string;
+  leadId?: string;
+  leadName?: string;
+  serviceType?: ServiceType;
+  dueDate: string;
+  priority: TaskPriority;
+  completed: boolean;
+  assignedTo: string;
+  createdAt: string;
+};
+
+export type FollowUpType = 'Call' | 'Email' | 'Meeting';
+export type FollowUpStatus = 'Pending' | 'Completed';
+
+export type FollowUp = {
+  id: string;
+  leadId: string;
+  leadName: string;
+  email: string;
+  phone: string;
+  serviceType: ServiceType;
+  date: string;
+  time?: string;
+  notes: string;
+  type: FollowUpType;
+  status: FollowUpStatus;
+  avatar?: string;
+  createdAt: string;
 };
 
 export type User = {
@@ -103,4 +149,6 @@ export type User = {
   name: string;
   role: UserRole;
   avatar: string;
+  email?: string;
+  department?: string;
 };
