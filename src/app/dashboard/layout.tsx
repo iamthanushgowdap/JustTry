@@ -13,7 +13,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [userRole, setUserRole] = React.useState<UserRole | null>(null);
+  const [userRole, setUserRole] = React.useState<UserRole>('sales');
   const pathname = usePathname();
 
   React.useEffect(() => {

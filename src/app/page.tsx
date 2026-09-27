@@ -55,6 +55,7 @@ export default function LandingPage() {
     try {
       if (typeof window !== 'undefined') {
         localStorage.setItem('justtry_active_role', role);
+        document.cookie = `justtry_session=${encodeURIComponent(JSON.stringify({ role }))}; path=/; max-age=604800; SameSite=Lax`;
       }
       login(role).catch(() => {});
     } catch (e) {
